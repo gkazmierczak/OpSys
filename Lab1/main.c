@@ -3,25 +3,25 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 int main(int argc, char **argv)
 {
-    printf("%d arguments passed.\n", argc);
-    int currentArg = 1;
-    int opt, firstFilenameIndex, lastFilenameIndex;
-    while ((opt = getopt(argc, argv, "cwr")) != -1)
+    int opt, firstFilenameIndex, lastFilenameIndex, count;
+    BlockArray *blockArray;
+    while ((opt = getopt(argc, argv, "cwrsi")) != -1)
     {
         switch (opt)
         {
         case 'c':
             if (optind < argc)
             {
-                createTable(atoi(argv[optind++]));
+                blockArray = initBlockArray(atoi(argv[optind++]));
             }
             else
             {
-                printf("Missing argument, usage: create SIZE\n");
-                return 1;
+                printf("Missing argument, usage: -c SIZE\n");
+                return -1;
             }
             break;
         case 'w':
@@ -29,76 +29,83 @@ int main(int argc, char **argv)
             lastFilenameIndex = 0;
             while (optind < argc)
             {
-                if (strcmp(argv[optind], "-c") == 0 || strcmp(argv[optind], "-w") == 0 || strcmp(argv[optind], "-r") == 0)
+                if (argv[optind][0] == '-')
                 {
                     break;
                 }
                 lastFilenameIndex = ++optind;
             }
-            printf("opcja w dla indeksow %d %d \n", firstFilenameIndex, lastFilenameIndex);
             if (lastFilenameIndex > firstFilenameIndex)
             {
-                char **filenames = (char **)calloc(lastFilenameIndex - firstFilenameIndex, sizeof(char *));
-                memcpy(filenames, argv + firstFilenameIndex, (lastFilenameIndex - firstFilenameIndex) * sizeof(char *));
-                countFiles(lastFilenameIndex - firstFilenameIndex, filenames);
+                count = lastFilenameIndex - firstFilenameIndex;
+                countFiles(count, firstFilenameIndex, argv);
+            }
+            else
+            {
+                printf("Missing argument, usage: -w FILENAME\n");
+                return -1;
             }
             break;
         case 'r':
+            if (optind < argc)
+            {
+                deleteBlock(blockArray, atoi(argv[optind++]));
+            }
+            else
+            {
+                printf("Missing argument, usage: -r INDEX\n");
+                return -1;
+            }
+            break;
+        case 's':
+            printf("Tempfile content stored at index: %d\n", storeTempfile(blockArray));
             break;
         default:
-            printf("Unrecognized option: %c\n", optopt);
+            printf("Unrecognized option: -%c\n", optopt);
             break;
         }
     }
-    // while (currentArg < argc)
-    // {
-    //     printf("%d %s\n", currentArg, argv[currentArg]);
-    //     if (strcmp(argv[currentArg], "create") == 0)
-    //     {
-    //         if (currentArg < argc - 1)
-    //         {
-    //             createTable(atoi(argv[++currentArg]));
-    //             currentArg++;
-    //             continue;
-    //         }
-    //         else
-    //         {
-    //             printf("Missing argument, usage: create SIZE\n");
-    //             return 1;
-    //         }
-    //     }
-    //     if (strcmp(argv[currentArg], "count") == 0)
-    //     {
-    //         if (currentArg < argc - 1)
-    //         {
-    //             wcFile(argv[++currentArg]);
-    //             currentArg++;
-    //             continue;
-    //         }
-    //         else
-    //         {
-    //             printf("Missing argument, usage: count FILE\n");
-    //             return 1;
-    //         }
-    //     }
-    //     else
-    //     {
-    //         printf("Unrecognized parameter.\n");
-    //         return 1;
-    //     }
-    //     // if (strcmp(argv[currentArg], "remove") == 0)
-    //     // {
-    //     //     if (currentArg < argc - 1)
-    //     //     {
-    //     //         createTable(atoi(argv[++currentArg]));
-    //     //         currentArg++;
-    //     //     }
-    //     //     else
-    //     //     {
-    //     //         printf("Missing argument, usage: remove INDEX\n");
-    //     //         return 1;
-    //     //     }
-    //     // }
-    // }
     return 0;
+}
+
+char *generateRandomString(int size)
+{
+    if (size < 1)
+        return NULL;
+    char *base = "0123456789QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm _.";
+    char *result = (char *)calloc(strlen(base), sizeof(char));
+    for (int i = 0; i < size - 1; i++)
+    {
+        result[i] = base[rand() % strlen(base)];
+    }
+    result[size - 1] = '\0';
+    return result;
+}
+
+void insertNBlocks(BlockArray *blockArray, int count, int startIndex, int blockSize)
+{
+    if (count > blockArray->size)
+    {
+        printf("Incorrect argument: Cannot insert %d blocks into %d-sized BlockArray.\n", count, blockArray->size);
+        return;
+    }
+    char *data = generateRandomString(blockSize);
+    for (int i = 0; i < count; i++)
+    {
+        insertIntoArrayAt(blockArray, i + startIndex, data);
+    }
+}
+
+void deleteNBlocks(BlockArray *blockArray, int count, int startIndex)
+{
+    if (count > blockArray->size)
+    {
+        printf("Incorrect argument: Cannot delete %d blocks from %d-sized BlockArray.\n", count, blockArray->size);
+        return;
+    }
+
+    for (int i = 0; i < count; i++)
+    {
+        deleteBlock(blockArray, i + startIndex);
+    }
 }
