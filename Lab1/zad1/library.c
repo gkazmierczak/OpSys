@@ -12,7 +12,7 @@ BlockArray *initBlockArray(int size)
         return NULL;
     BlockArray *blockArray = calloc(1, sizeof(BlockArray));
     blockArray->size = size;
-    blockArray->array = (void **)calloc(size, sizeof(void *));
+    blockArray->array = (char **)calloc(size, sizeof(char *));
     return blockArray;
 }
 
@@ -34,6 +34,11 @@ int wcFile(char *filename, FILE *tempfile)
         if (c == '\n' || c == '\0')
             lines++;
     }
+    if (chars > 0)
+    {
+        words++;
+        lines++;
+    }
     fclose(file);
     if (tempfile != NULL)
     {
@@ -47,7 +52,6 @@ int countFiles(int filecount, int startIndex, char **args)
     FILE *temp = fopen(TEMP_FILE, "w+");
     for (int i = 0; i < filecount; i++)
     {
-        printf("%s \n", args[startIndex + i]);
         wcFile(args[startIndex + i], temp);
     }
     fclose(temp);
@@ -91,6 +95,8 @@ int storeTempfile(BlockArray *blockArray)
 
     // Get content of tempfile, store it in array and return index
     char *fileContent = getTempfileContent();
+    if (fileContent == NULL)
+        return -1;
     blockArray->array[blockIndex] = fileContent;
     return blockIndex;
 }
@@ -118,15 +124,36 @@ int deleteBlock(BlockArray *blockArray, int index)
     return 0;
 }
 
-int insertIntoArrayAt(BlockArray *blockArray, int index, void *data)
+int insertIntoArrayAt(BlockArray *blockArray, int index, char *data)
 {
     //  Check edge cases
     if (blockArray == NULL || blockArray->array == NULL)
+    {
         return -1;
+    }
     if (index < 0 || index >= blockArray->size)
+    {
         return -2;
+    }
     if (blockArray->array[index] != NULL)
+    {
         return -3;
-    blockArray->array[index] = data;
+    }
+
+    blockArray->array[index] = calloc(strlen(data), sizeof(char));
+    strcpy(blockArray->array[index], data);
     return 0;
+}
+
+void deleteBlockArray(BlockArray *blockArray)
+{
+    for (int i = 0; i < blockArray->size; i++)
+    {
+        if (blockArray->array[i] != NULL)
+        {
+            free(blockArray->array[i]);
+        }
+    }
+    free(blockArray->array);
+    free(blockArray);
 }

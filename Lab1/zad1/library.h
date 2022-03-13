@@ -4,7 +4,7 @@
 typedef struct BlockArray
 {
     int size;
-    void **array;
+    char **array;
 } BlockArray;
 
 /*
@@ -61,4 +61,9 @@ extern int storeTempfile(BlockArray *blockArray);
         -2 - Index out of bounds
         -3 - Some data already occupies specified index in BlockArray
 */
-extern int insertIntoArrayAt(BlockArray *blockArray, int index, void *data);
+extern int insertIntoArrayAt(BlockArray *blockArray, int index, char *data);
+
+/*
+    Frees up the memory taken by specified BlockArray.
+*/
+extern void deleteBlockArray(BlockArray *blockArray);
