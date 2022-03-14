@@ -65,6 +65,9 @@ test_static: zad3_static
 test_shared: zad3_shared
 	make run_tests
 
+test_dynamic: zad3_dynamic
+	make run_tests
+
 all_test:
 	make random
 	touch results3a.txt

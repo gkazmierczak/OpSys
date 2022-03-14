@@ -2,28 +2,29 @@ CC = gcc -Wall
 LIB_NAME = library
 MAIN = main
 NAME = zad3
+Olevel=O0
 
 all: static shared clean
 
 static:
-	$(CC) -c $(LIB_NAME).c
+	$(CC) -c $(LIB_NAME).c -$(Olevel)
 	ar rcs $(LIB_NAME).a $(LIB_NAME).o
 
 shared:
-	$(CC) -c -fPIC $(LIB_NAME).c
+	$(CC) -c -fPIC $(LIB_NAME).c -$(Olevel)
 	$(CC) -shared -o $(LIB_NAME).so $(LIB_NAME).o
 
 
 zad3_static: static
-	$(CC) -c $(MAIN).c
+	$(CC) -c $(MAIN).c -$(Olevel)
 	$(CC) $(MAIN).o $(LIB_NAME).a -o $(NAME)
 
 zad3_shared: shared
-	$(CC) -c $(MAIN).c
+	$(CC) -c $(MAIN).c -$(Olevel)
 	$(CC) $(MAIN).o -L. $(LIB_NAME).so -Wl,-rpath=. -o $(NAME)
 
 zad3_dynamic: shared
-	gcc $(MAIN)_dynamic.c -o $(NAME) -ldl
+	gcc $(MAIN)_dynamic.c -o $(NAME) -ldl -$(Olevel)
 	
 clean:
 	rm -f *.o
