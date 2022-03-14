@@ -28,7 +28,6 @@ void printReportHeader(void)
 void saveTimer(char *name)
 {
     int clkTicks = sysconf(_SC_CLK_TCK);
-    printf("%ld %ld %ld %ld %ld %ld", endTime, startTime, en_cpu.tms_cstime, st_cpu.tms_cstime, en_cpu.tms_cutime, st_cpu.tms_cutime);
     double realTime = (double)(endTime - startTime) / clkTicks;
     double systemTime = (double)(en_cpu.tms_stime - st_cpu.tms_stime) / clkTicks;
     double userTime = (double)(en_cpu.tms_utime - st_cpu.tms_utime) / clkTicks;
@@ -108,14 +107,15 @@ void alternateAddFree(BlockArray *blockArray, int times, int count, int idx, int
 /*
     Program options:
         -c SIZE - creates a BlockArray of SIZE and sets it as current BlockArray
-        -w FILENAMES -  performs wc-like count on specified files and stores the result in a tempfile
+        -d COUNT INDEX - tries to remove COUNT blocks under indexes starting from INDEX, empty indexes are counted as deleted, stops at array end
+        -e "TEST DESC" - stops timing clock, outputs measured time to file  with TEST DESC description if -t was used before
+        -g INDEX - outputs content of block at specified INDEX
+        -h Prints a timing header to output file
+        -i COUNT INDEX SIZE - generates random string with SIZE chars and tries to insert it into BlockArray at COUNT indexes starting from INDEX
         -r INDEX - removes block at given index
         -s - stores contents of tempfile in first free block of BlockArray, outputs index
-        -g INDEX - outputs content of block at specified INDEX
         -t - starts timing clock
-        -e "TEST DESC" - stops timing clock, outputs measured time to file  with TEST DESC description if -t was used before
-        -i COUNT INDEX SIZE - generates random string with SIZE chars and tries to insert it into BlockArray at COUNT indexes starting from INDEX
-        -d COUNT INDEX - tries to remove COUNT blocks under indexes starting from INDEX, empty indexes are counted as deleted, stops at array end
+        -w FILENAMES -  performs wc-like count on specified files and stores the result in a tempfile
 */
 int main(int argc, char **argv)
 {
