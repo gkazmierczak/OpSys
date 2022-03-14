@@ -6,27 +6,24 @@ NAME = zad3
 all: static shared clean
 
 static:
-	$(CC) -c $(LIB_NAME).c -$(Olevel)
+	$(CC) -c $(LIB_NAME).c
 	ar rcs $(LIB_NAME).a $(LIB_NAME).o
 
 shared:
-	$(CC) -c -fPIC $(LIB_NAME).c -$(Olevel)
+	$(CC) -c -fPIC $(LIB_NAME).c
 	$(CC) -shared -o $(LIB_NAME).so $(LIB_NAME).o
 
 
-zad3_static:
-	make static
-	$(CC) -c $(MAIN).c -$(Olevel)
+zad3_static: static
+	$(CC) -c $(MAIN).c
 	$(CC) $(MAIN).o $(LIB_NAME).a -o $(NAME)
 
-zad3_shared:
-	make shared
-	$(CC) -c $(MAIN).c -$(Olevel)
+zad3_shared: shared
+	$(CC) -c $(MAIN).c
 	$(CC) $(MAIN).o -L. $(LIB_NAME).so -Wl,-rpath=. -o $(NAME)
 
-zad3_dynamic:
-	make shared
-	gcc $(MAIN)_dynamic.c -o $(NAME) -ldl -$(Olevel)
+zad3_dynamic: shared
+	gcc $(MAIN)_dynamic.c -o $(NAME) -ldl
 	
 clean:
 	rm -f *.o
@@ -62,14 +59,6 @@ tests_100M:
 	mv bigfile results.tmp
 	./$(NAME) -c 10 -h -t -s -e "store 100MB tempfile" -t -r 0 -e "free block from 100mb tempfile"
 
-static+tests:
-	make zad2_static
-	make run_tests
-
-shared+tests:
-	make zad2_shared
-	make run_tests
-
 all_test:
 	make random
 	touch results3b.txt
@@ -92,24 +81,21 @@ all_test:
 	rm -f results3.txt
 	rm -f $(NAME)
 
-static_test:
-	make zad3_static
+static_test: zad3_static
 	make run_tests
 	echo "Test results - static, -$(Olevel):" >> results3b.txt
 	cat results3.txt >> results3b.txt
 	rm -f results3.txt
 	rm -f $(NAME)
 
-shared_test:
-	make zad3_shared
+shared_test: zad3_shared
 	make run_tests
 	echo "Test results - shared, -$(Olevel):" >> results3b.txt
 	cat results3.txt >> results3b.txt
 	rm -f results3.txt
 	rm -f $(NAME)
 
-dynamic_test:
-	make zad3_dynamic
+dynamic_test: zad3_dynamic
 	make run_tests
 	echo "Test results - dynamic, -$(Olevel):" >> results3b.txt
 	cat results3.txt >> results3b.txt

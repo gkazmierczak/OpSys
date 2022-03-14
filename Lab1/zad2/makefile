@@ -13,13 +13,11 @@ shared:
 	$(CC) -c -fPIC $(LIB_NAME).c
 	$(CC) -shared -o $(LIB_NAME).so $(LIB_NAME).o
 
-zad2_static:
-	make static
+zad2_static: static
 	$(CC) -c $(MAIN).c
 	$(CC) $(MAIN).o $(LIB_NAME).a -o $(NAME)
 
-zad2_shared:
-	make shared
+zad2_shared: shared
 	$(CC) -c $(MAIN).c
 	$(CC) $(MAIN).o -L. $(LIB_NAME).so -Wl,-rpath=. -o $(NAME)
 	
@@ -58,10 +56,8 @@ tests_100M:
 	mv bigfile results.tmp
 	./$(NAME) -c 10 -h -t -s -e "store 100MB tempfile" -t -r 0 -e "free block from 100mb tempfile"
 
-static+tests:
-	make zad2_static
+test_static: zad2_static
 	make run_tests
 
-shared+tests:
-	make zad2_shared
+test_shared: zad2_shared
 	make run_tests

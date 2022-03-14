@@ -14,18 +14,15 @@ shared:
 	$(CC) -shared -o $(LIB_NAME).so $(LIB_NAME).o
 
 
-zad3_static:
-	make static
+zad3_static: static
 	$(CC) -c $(MAIN).c
 	$(CC) $(MAIN).o $(LIB_NAME).a -o $(NAME)
 
-zad3_shared:
-	make shared
+zad3_shared: shared
 	$(CC) -c $(MAIN).c
 	$(CC) $(MAIN).o -L. $(LIB_NAME).so -Wl,-rpath=. -o $(NAME)
 
-zad3_dynamic:
-	make shared
+zad3_dynamic: shared
 	gcc $(MAIN)_dynamic.c -o $(NAME) -ldl
 	
 clean:
@@ -62,12 +59,10 @@ tests_100M:
 	mv bigfile results.tmp
 	./$(NAME) -c 10 -h -t -s -e "store 100MB tempfile" -t -r 0 -e "free block from 100mb tempfile"
 
-static+tests:
-	make zad2_static
+test_static: zad3_static
 	make run_tests
 
-shared+tests:
-	make zad2_shared
+test_shared: zad3_shared
 	make run_tests
 
 all_test:
