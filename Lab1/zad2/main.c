@@ -22,12 +22,13 @@ void endTimer(void)
 
 void printReportHeader(void)
 {
-    fprintf(reportsFile, "Real time [s] | System time [s] | User time [s] | Test description  \n");
+    fprintf(reportsFile, "\nReal time [s] | System time [s] | User time [s] | Test description  \n");
 }
 
 void saveTimer(char *name)
 {
     int clkTicks = sysconf(_SC_CLK_TCK);
+    printf("%ld %ld %ld %ld %ld %ld", endTime, startTime, en_cpu.tms_cstime, st_cpu.tms_cstime, en_cpu.tms_cutime, st_cpu.tms_cutime);
     double realTime = (double)(endTime - startTime) / clkTicks;
     double systemTime = (double)(en_cpu.tms_stime - st_cpu.tms_stime) / clkTicks;
     double userTime = (double)(en_cpu.tms_utime - st_cpu.tms_utime) / clkTicks;
@@ -96,6 +97,14 @@ void deleteNBlocks(BlockArray *blockArray, int count, int startIndex)
     }
 }
 
+void alternateAddFree(BlockArray *blockArray, int times, int count, int idx, int size)
+{
+    for (int i = 0; i < times; i++)
+    {
+        insertNBlocks(blockArray, count, idx, size);
+        deleteNBlocks(blockArray, count, idx);
+    }
+}
 /*
     Program options:
         -c SIZE - creates a BlockArray of SIZE and sets it as current BlockArray
@@ -112,9 +121,8 @@ int main(int argc, char **argv)
 {
     int opt, firstFilenameIndex, lastFilenameIndex, count, idx;
     BlockArray *blockArray = NULL;
-    reportsFile = fopen("raport2.txt", "w+");
-    printReportHeader();
-    while ((opt = getopt(argc, argv, "cdegirstw")) != -1)
+    reportsFile = fopen("raport2.txt", "a+");
+    while ((opt = getopt(argc, argv, "acdeghirstw")) != -1)
     {
         switch (opt)
         {
@@ -187,6 +195,9 @@ int main(int argc, char **argv)
         case 't':
             startTimer();
             break;
+        case 'h':
+            printReportHeader();
+            break;
         case 'e':
             if (optind < argc)
             {
@@ -211,8 +222,15 @@ int main(int argc, char **argv)
                 optind += 2;
             }
             break;
+        case 'a':
+            if (optind + 3 < argc)
+            {
+                alternateAddFree(blockArray, atoi(argv[optind]), atoi(argv[optind + 1]), atoi(argv[optind + 2]), atoi(argv[optind + 3]));
+                optind += 4;
+            }
+            break;
         default:
-            printf("Unrecognized option: -%c\n", optopt);
+            printf("Unrecognized option: -%c %d\n", optopt, optind);
             break;
         }
     }
