@@ -146,14 +146,12 @@ int main(int argc, char **argv)
     {
         lookup = argv[1][0];
         filename = argv[2];
-        printf("%c %s\n", lookup, filename);
     }
     else if (argc == 2)
     {
         lookup = argv[1][0];
         printf("Enter file name: ");
         scanf("%s", filename);
-        printf("%c %s\n", lookup, filename);
     }
     else
     {
@@ -161,10 +159,9 @@ int main(int argc, char **argv)
         scanf("%c", &lookup);
         printf("Enter file name: ");
         scanf("%s", filename);
-        printf("%c %s\n", lookup, filename);
     }
 
-    reportsFile = fopen("pomiar_zad_2.txt", "a+");
+    reportsFile = fopen("results.txt", "a+");
     printReportHeader();
     startTimer();
     lookupCharSys(lookup, filename);

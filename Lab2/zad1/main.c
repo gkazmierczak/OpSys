@@ -211,14 +211,12 @@ int main(int argc, char **argv)
     {
         srcFilename = argv[1];
         destFilename = argv[2];
-        printf("%s %s\n", srcFilename, destFilename);
     }
     else if (argc == 2)
     {
         srcFilename = argv[1];
         printf("Enter destination file name: ");
         scanf("%s", destFilename);
-        printf("%s %s\n", srcFilename, destFilename);
     }
     else
     {
@@ -226,10 +224,9 @@ int main(int argc, char **argv)
         scanf("%s", srcFilename);
         printf("Enter destination file name: ");
         scanf("%s", destFilename);
-        printf("%s %s\n", srcFilename, destFilename);
     }
 
-    reportsFile = fopen("pomiar_zad_1.txt", "a+");
+    reportsFile = fopen("results.txt", "a+");
     printReportHeader();
     startTimer();
     stripWhitelinesSys(srcFilename, destFilename);
