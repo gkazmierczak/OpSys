@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <sys/times.h>
+#include <float.h>
 
 static clock_t startTime, endTime;
 static struct tms st_cpu, en_cpu;
@@ -20,25 +21,22 @@ void endTimer(void)
     endTime = times(&en_cpu);
 }
 
-void saveTimer(char *prec, FILE *reportsFile)
+void saveTimer(int childrenCount, char *prec, FILE *reportsFile)
 {
     int clkTicks = sysconf(_SC_CLK_TCK);
     double realTime = (double)(endTime - startTime) / clkTicks;
     double systemTime = (double)(en_cpu.tms_cstime - st_cpu.tms_cstime) / clkTicks;
     double userTime = (double)(en_cpu.tms_cutime - st_cpu.tms_cutime) / clkTicks;
-    printf("%13f | %15f | %13f | Precision: %s \n", realTime, systemTime, userTime, prec);
-    fprintf(reportsFile, "%13f | %15f | %13f | Precision: %s \n", realTime, systemTime, userTime, prec);
+    printf("Real time:  %f | System time:  %f | User time:  %f | Process count:  %d | Precision:  %s \n", realTime, systemTime, userTime, childrenCount, prec);
+    fprintf(reportsFile, "%13f | %15f | %13f | %19d |  %s \n", realTime, systemTime, userTime, childrenCount, prec);
 }
-void printReportHeader(FILE *reportsFile)
-{
-    fprintf(reportsFile, "\nReal time [s] | System time [s] | User time [s] | Precision  \n");
-}
-void calculateRects(int startRectIndex, int rectCount, double rectWidth, int childNumber)
+void calculateRects(unsigned long long startRectIndex, unsigned long long rectCount, double rectWidth, int childNumber)
 {
     double total = 0;
     double rectValue;
     double x;
-    for (int j = startRectIndex; j <= startRectIndex + rectCount; j++)
+
+    for (unsigned long long j = startRectIndex; j <= startRectIndex + rectCount; j++)
     {
         x = (double)(j * rectWidth) + (double)(rectWidth / 2);
         rectValue = (double)(4.0 / ((x * x) + 1));
@@ -51,7 +49,7 @@ void calculateRects(int startRectIndex, int rectCount, double rectWidth, int chi
     strcat(filename, num);
     strcat(filename, ".txt");
     FILE *file = fopen(filename, "w+");
-    fprintf(file, "%f\n", rectWidth * total);
+    fprintf(file, "%.*g\n", DBL_DIG + 10, rectWidth * total);
     fflush(file);
     fclose(file);
     return;
@@ -74,17 +72,12 @@ void sumResultsFromFiles(int childProcessCount)
         strcat(filename, num);
         strcat(filename, ".txt");
         FILE *file = fopen(filename, "r");
-        printf("%s\n", filename);
-        fflush(stdout);
         getline(&line, &len, file);
-
-        printf("%s\n", line);
-        fflush(stdout);
         partialResult = strtod(line, NULL);
         total += partialResult;
         fclose(file);
     }
-    printf("TOTAL: %f\n", total);
+    printf("RESULT: %.*g\n", DBL_DIG + 10, total);
     fflush(stdout);
 }
 
@@ -92,11 +85,10 @@ int main(int argc, char **argv)
 {
     double rectWidth = strtod(argv[1], NULL);
     int childProcessCount = atoi(argv[2]);
-    long rectsPerChild = ((1 / rectWidth) / childProcessCount);
-    int rectIndex = 0;
-    int pid;
+    unsigned long long rectsPerChild = ((1 / rectWidth) / childProcessCount);
+    unsigned long long rectIndex = 0;
+    int pid = 0;
     FILE *reportsFile = fopen("results.txt", "a+");
-    printReportHeader(reportsFile);
     startTimer();
     for (int i = 0; i < childProcessCount; i++)
     {
@@ -110,7 +102,6 @@ int main(int argc, char **argv)
         {
             rectIndex += rectsPerChild + 1;
         }
-        /
     }
     for (int i = 0; i < childProcessCount; i++)
     {
@@ -118,7 +109,7 @@ int main(int argc, char **argv)
     }
     endTimer();
     sumResultsFromFiles(childProcessCount);
-    saveTimer(argv[1], reportsFile);
+    saveTimer(childProcessCount, argv[1], reportsFile);
     fclose(reportsFile);
     return 0;
 }
