@@ -8,20 +8,34 @@
 
 void checkFile(char *filepath, int pid, char *pattern)
 {
+    char ELF[5];
+    ELF[0] = 0x7f;
+    ELF[1] = 'E';
+    ELF[2] = 'L';
+    ELF[3] = 'F';
+    ELF[4] = '\0';
+    char *test = calloc(8, sizeof(char));
     FILE *fp = fopen(filepath, "r");
-    char *lineBuffer = malloc(1024 * sizeof(char));
-    size_t lineLen = 0;
-    ssize_t read;
-    while ((read = getline(&lineBuffer, &lineLen, fp)) != -1)
+    char *lineBuffer = NULL;
+    fread(test, 1, 4, fp);
+    test[4] = '\0';
+    if (strcmp(test, ELF))
     {
-        if (strstr(lineBuffer, pattern) != NULL)
+        fseek(fp, 0, SEEK_SET);
+        size_t lineLen = 0;
+        ssize_t read;
+        while ((read = getline(&lineBuffer, &lineLen, fp)) != -1)
         {
-            printf("PID:  %d  |  PATH:  %s  \n", pid, filepath);
-            fflush(stdout);
-            break;
+            if (strstr(lineBuffer, pattern) != NULL)
+            {
+                printf("PID:  %d  |  PATH:  %s  \n", pid, filepath);
+                fflush(stdout);
+                break;
+            }
         }
     }
     fclose(fp);
+    free(test);
     free(lineBuffer);
     return;
 }
@@ -37,6 +51,7 @@ void crawlDirectory(char *dirname, int maxdepth, char *pattern)
     {
         perror("Error opening directory: ");
         fflush(stdout);
+        exit(-1);
     }
     struct dirent *currentFile = readdir(currentDir);
     char *newPath = (char *)calloc(2048, sizeof(char));
@@ -53,6 +68,9 @@ void crawlDirectory(char *dirname, int maxdepth, char *pattern)
             printf("Unable to lstat file %s :", newPath);
             perror("");
             fflush(stdout);
+            free(statBuffer);
+            free(newPath);
+            closedir(currentDir);
             exit(-1);
         }
         if (S_ISDIR(statBuffer->st_mode))
@@ -77,19 +95,23 @@ void crawlDirectory(char *dirname, int maxdepth, char *pattern)
         currentFile = readdir(currentDir);
     }
     closedir(currentDir);
+    free(statBuffer);
+    free(newPath);
     for (int i = 0; i < childrenCount; i++)
     {
         wait(0);
     }
+    return;
 }
 
 int main(int argc, char **argv)
 {
-    char *dirname = malloc(1024 * sizeof(char));
-    char *pattern = malloc(1024 * sizeof(char));
+    char *dirname = NULL;
+    char *pattern = NULL;
     int maxdepth = -1;
     if (argc >= 4)
     {
+
         dirname = argv[1];
         pattern = argv[2];
         maxdepth = atoi(argv[3]);
@@ -97,11 +119,14 @@ int main(int argc, char **argv)
     else if (argc == 2)
     {
         dirname = argv[1];
+        pattern = malloc(1024 * sizeof(char));
         printf("Enter pattern: ");
         scanf("%s", pattern);
     }
     else if (argc == 1)
     {
+        dirname = malloc(1024 * sizeof(char));
+        pattern = malloc(1024 * sizeof(char));
         printf("Enter directory path: ");
         scanf("%s", dirname);
         printf("Enter pattern: ");
@@ -126,6 +151,10 @@ int main(int argc, char **argv)
         perror("Cannot open directory ");
         fflush(stdout);
     }
+    if (argc <= 2)
+        free(pattern);
+    if (argc == 1)
+        free(dirname);
 
     return 0;
 }

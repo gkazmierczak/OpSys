@@ -9,11 +9,11 @@ int main(int argc, char **argv)
     int pid = 0;
     for (int i = 0; i < childProcessCount; i++)
     {
-        if (pid == 0)
+        if ((pid = fork()) == 0)
         {
-            pid = fork();
+            printf("CHILD PID: %d\n", getpid());
+            exit(0);
         }
     }
-    printf("PID: %d\n", getpid());
     return 0;
 }

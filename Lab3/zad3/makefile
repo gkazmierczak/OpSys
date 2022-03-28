@@ -1,4 +1,4 @@
-CC = gcc -Wall 
+CC = gcc -Wall -g
 
 all: build clean
 

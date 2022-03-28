@@ -52,6 +52,7 @@ void calculateRects(unsigned long long startRectIndex, unsigned long long rectCo
     fprintf(file, "%.*g\n", DBL_DIG + 10, rectWidth * total);
     fflush(file);
     fclose(file);
+    free(filename);
     return;
 }
 
@@ -77,6 +78,8 @@ void sumResultsFromFiles(int childProcessCount)
         total += partialResult;
         fclose(file);
     }
+    free(filename);
+    free(line);
     printf("RESULT: %.*g\n", DBL_DIG + 10, total);
     fflush(stdout);
 }
