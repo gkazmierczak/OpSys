@@ -1,0 +1,9 @@
+Potoki nazwane działają dla niezależnych procesów - programy uruchomione z jednego terminala mogą przesyłać dane od innych terminali. 
+Dla wszystkich testowanych przypadków:
+    - wielu producentów, jeden konsument
+    - jeden producent, wielu konsumentów
+    - wielu producentów, wielu konsumentów
+programy zachowują się poprawnie. 
+Nie dochodzi do utraty ani zwielokrotnienia danych. 
+Dane umieszczane są w prawidłowych wierszach.
+Dla N>PIPE_BUF programy zachowują się poprawnie.
