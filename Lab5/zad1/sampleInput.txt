@@ -1,0 +1,20 @@
+s1 = cat /etc/passwd 
+s2 = ls | grep a 
+s3 = wc -l
+s4 = echo | mail | tail -n +2 | head -n -2 | sort -k 3
+s5 = ps aux
+s6 = sort -r
+s7 = uniq
+s8 = more
+s9 = grep i
+s10 = head -n 4
+s11 = uniq
+
+s1 | s3  
+s1             
+s2 | s3
+s4   
+s5 | s3
+s5 | s6 | s7
+s1 | s6 | s10
+s5 | s8 | s9 | s6 | s11 | s10
