@@ -101,6 +101,23 @@ void printParsedLine(parsed_line *line)
     fflush(stdout);
 }
 
+void freeParsedLines(parsed_line **parsedLines, int lineCount)
+{
+    for (int i = 0; i < lineCount; i++)
+    {
+        free(parsedLines[i]->name);
+
+        for (int j = 0; j < parsedLines[i]->commandCount; j++)
+        {
+            free(parsedLines[i]->args[j]);
+        }
+        free(parsedLines[i]->commands);
+        free(parsedLines[i]->args);
+        free(parsedLines[i]);
+    }
+    free(parsedLines);
+}
+
 parsed_line *parseLine(char *line)
 {
     /*
@@ -190,40 +207,24 @@ void handleCommandLine(char *line, parsed_line **parsedLines, int lineCount)
         {
             fprintf(stderr, "Incorrect input. Maximum command line count is %d, input requires usage of line %d.\n", MAX_LINES, lineIndexes[i]);
             fflush(stderr);
+            freeParsedLines(parsedLines, lineCount);
+            free(components);
+            free(line);
             exit(-1);
         }
         else if (lineIndexes[i] > lineCount)
         {
             fprintf(stderr, "Incorrect input. %d command lines were declared, input requires usage of line %d.\n", lineCount, lineIndexes[i]);
             fflush(stderr);
+            free(line);
+            free(components);
+            freeParsedLines(parsedLines, lineCount);
             exit(-1);
         }
     }
     executeCommands(lineIndexes, parsedLines, componentIdx);
     free(components);
     return;
-}
-
-void freeParsedLines(parsed_line **parsedLines, int lineCount)
-{
-    for (int i = 0; i < lineCount; i++)
-    {
-        //     char *name;       // Line name (eg. s1)
-        // char **commands;  // Commands list (in execution order)
-        // char ***args;     // Command arguments (in command execution order)
-        // int commandCount;
-        free(parsedLines[i]->name);
-
-        for (int j = 0; j < parsedLines[i]->commandCount; j++)
-        {
-            // free(parsedLines[i]->commands[j]);
-            free(parsedLines[i]->args[j]);
-        }
-        free(parsedLines[i]->commands);
-        free(parsedLines[i]->args);
-        free(parsedLines[i]);
-    }
-    free(parsedLines);
 }
 
 void handleInputFile(char *filepath)
