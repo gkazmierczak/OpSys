@@ -1,5 +1,3 @@
-#include <sys/ipc.h>
-#include <sys/msg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -7,11 +5,11 @@
 #include <signal.h>
 #include <unistd.h>
 #include <time.h>
-#include "chat.h"
+#include "chatmq.h"
 #include "message.h"
 
 int clients[MAX_CLIENTS][2];
-int serverQueueID;
+mqd_t serverQueueID;
 int currentClientCount = 0;
 int nextClientID = 0;
 FILE *file;
@@ -43,6 +41,7 @@ void cleanup()
         }
     }
     closeQueue(serverQueueID);
+    unlinkQueue(SERVER_QUEUE);
     time_t timestamp = time(NULL);
     struct tm *timeinfo;
     timeinfo = localtime(&timestamp);
@@ -76,13 +75,14 @@ void handleClientDisconnect(message_t *msg)
     {
         if (clients[i][0] == msg->senderID)
         {
+            closeQueue(clients[i][1]);
             clients[i][0] = -1;
             clients[i][1] = -1;
             currentClientCount--;
+            printf("Successfully closed client %d\n", msg->senderID);
             break;
         }
     }
-    printf("Successfully closed client %d\n", msg->senderID);
 }
 void handleList(message_t *msg)
 {
@@ -140,8 +140,8 @@ int addClient(int clientQueueID)
 }
 void handleInit(message_t *msg)
 {
-    int clientQueueKey = atoi(msg->content);
-    int clientQueueID = getQueue(clientQueueKey);
+    char *clientQueueName = msg->content;
+    mqd_t clientQueueID = getQueue(clientQueueName);
     if (clientQueueID == -1)
     {
         perror("ERROR: Could not open client queue");
@@ -162,8 +162,7 @@ void handleInit(message_t *msg)
 
 void init()
 {
-    key_t serverQueueKey = getServerKey();
-    serverQueueID = createQueue(serverQueueKey);
+    serverQueueID = createQueue(SERVER_QUEUE);
     if (serverQueueID == -1)
     {
         perror("ERROR: Could not open server queue");
@@ -193,8 +192,7 @@ int main(void)
     init();
     while (1)
     {
-        // if (receive(serverQueueID, &msgIn) == -1)
-        if (msgrcv(serverQueueID, &msgIn, sizeof(message_t) - sizeof(long), -6, 0) == -1)
+        if (receive(serverQueueID, &msgIn) == -1)
         {
             if (errno != EINTR)
             {

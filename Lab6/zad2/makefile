@@ -1,5 +1,5 @@
 CC = gcc -Wall 
-LIB_NAME = chat
+LIB_NAME = chatmq
 
 all: build clean
 
@@ -10,8 +10,8 @@ static:
 build: static
 	$(CC) -c server.c
 	$(CC) -c client.c
-	$(CC) server.o $(LIB_NAME).a -lrt -o server
-	$(CC) client.o $(LIB_NAME).a -lrt -o client
+	$(CC) server.o $(LIB_NAME).a -o server -lrt
+	$(CC) client.o $(LIB_NAME).a -o client -lrt
 
 rebuild:
 	rm -f client server chat.a

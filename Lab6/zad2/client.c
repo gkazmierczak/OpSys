@@ -1,20 +1,19 @@
-#include <sys/ipc.h>
-#include <sys/msg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
 #include <time.h>
-#include "chat.h"
+#include "chatmq.h"
 #include "message.h"
 
-int serverQueueID = -1;
-int queueID = -1;
+mqd_t serverQueueID = -1;
+mqd_t queueID = -1;
 int assignedID = -1;
 pid_t parentPid = -1;
 pid_t childPid = -1;
 char *inputBuffer = NULL;
+char *queueName = NULL;
 message_t msgIn;
 message_t msgOut;
 
@@ -32,29 +31,28 @@ void handleExit()
             msgOut.targetID = -1;
             send(serverQueueID, &msgOut);
             closeQueue(queueID);
+            unlinkQueue(queueName);
         }
         if (childPid > 0)
         {
             kill(childPid, SIGKILL);
         }
-        // if (inputBuffer != NULL)
-        // {
-        //     free(inputBuffer);
-        // }
+        if (queueName != NULL)
+        {
+            free(queueName);
+        }
     }
 }
 void handleSig(int sig)
 {
-
-    // puts("\nSIGINT Received, terminating.");
     exit(0);
 }
 
-void initClient(key_t key)
+void initClient(char *queueName)
 {
     msgOut.type = MSG_INIT;
     msgOut.timestamp = time(NULL);
-    sprintf(msgOut.content, "%d", key);
+    sprintf(msgOut.content, "%s", queueName);
     if (send(serverQueueID, &msgOut) == -1)
     {
         perror("ERROR during init: ");
@@ -116,6 +114,7 @@ void sender()
         msgOut.senderID = assignedID;
         msgOut.timestamp = time(NULL);
         MsgType msgType = msgTypeFromString(messageType);
+
         switch (msgType)
         {
         case MSG_STOP:
@@ -133,6 +132,7 @@ void sender()
         case MSG_ALL:
             if (text != NULL)
             {
+
                 msgOut.targetID = -1;
                 msgOut.type = MSG_ALL;
                 content = strtok_r(text, " ", &text);
@@ -147,7 +147,6 @@ void sender()
                     continue;
                 }
             }
-
             break;
 
         case MSG_ONE:
@@ -215,7 +214,6 @@ void receiver()
         case MSG_STOP:
             puts("STOP received, exiting.");
             kill(parentPid, SIGINT);
-            // exit(0);
             break;
         default:
             printMessage(&msgIn);
@@ -226,26 +224,23 @@ void receiver()
 
 int main(void)
 {
-    // msgOut = (message_t *)calloc(1, sizeof(message_t));
-    // msgIn = (message_t *)calloc(1, sizeof(message_t));
-
     atexit(handleExit);
-    key_t serverQueueKey = getServerKey();
-    serverQueueID = getQueue(serverQueueKey);
+    serverQueueID = getQueue(SERVER_QUEUE);
     if (serverQueueID == -1)
     {
         perror("ERROR: Could not open server queue");
         exit(-1);
     }
     printf("Server queue: %d\n", serverQueueID);
-    key_t clientQueueKey = getClientKey();
-    queueID = createQueue(clientQueueKey);
+    queueName = getClientQueueName();
+    printf("%s\n", queueName);
+    queueID = createQueue(queueName);
     if (queueID == -1)
     {
         perror("ERROR: Could not open client queue");
         exit(-1);
     }
-    initClient(clientQueueKey);
+    initClient(queueName);
     signal(SIGINT, handleSig);
     parentPid = getpid();
     if ((childPid = fork()) == 0)
