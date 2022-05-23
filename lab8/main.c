@@ -146,6 +146,9 @@ int main(int argc, char **argv)
     char *inputPath = argv[3];
     char *outputPath = argv[4];
     loadImage(threadCount, 0, inputPath);
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
+
     pthread_t *threads = (pthread_t *)calloc(threadCount, sizeof(pthread_t));
     struct threadArg *threadArgs = (struct threadArg *)calloc(threadCount, sizeof(struct threadArg));
     if (!strcasecmp(argv[2], "NUMBERS"))
@@ -192,13 +195,11 @@ int main(int argc, char **argv)
         perror("Could not open times file ");
         puts("Times will be printed to stdout instead.");
     }
-    long unsigned int totalTime = 0;
 
     for (int i = 0; i < threadCount; i++)
     {
         long unsigned int *time;
         pthread_join(threads[i], (void **)&time);
-        totalTime = totalTime + *time;
         if (timesFile != NULL)
         {
             fprintf(timesFile, "Thread #%d | Mode: %s | Input file path: %s | Thread execution time: %lu [us]\n", i, argv[2], inputPath, *time);
@@ -209,6 +210,8 @@ int main(int argc, char **argv)
         }
         free(time);
     }
+    gettimeofday(&end, NULL);
+    long unsigned int totalTime = (end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec;
     if (timesFile != NULL)
     {
         fprintf(timesFile, "Mode: %s | Thread count: %d | Input file path: %s | Total execution time: %lu [us]\n\n\n", argv[2], threadCount, inputPath, totalTime);
